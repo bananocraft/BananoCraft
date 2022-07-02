@@ -1,9 +1,6 @@
 package banano.bananominecraft.bananoeconomy;
 
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
+import com.mongodb.client.*;
 import org.bson.Document;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -18,8 +15,8 @@ public class DB {
 
     static Plugin plugin = Main.getPlugin(Main.class);
     private static MongoClient mongoClient = MongoClients.create(getMongoURI());
-    public static MongoCollection<Document> usersCollection =
-            mongoClient.getDatabase("BananoCraft").getCollection("users");
+
+    private static MongoDatabase db = mongoClient.getDatabase("BananoCraft");
 
     public static String getMongoURI(){
         return plugin.getConfig().getString("mongoURI");
@@ -51,7 +48,7 @@ public class DB {
                 .append("name", player.getName())
                 .append("wallet", banAccount)
                 .append("frozen", false);
-        usersCollection.insertOne(document1);
+        db.getCollection("users").insertOne(document1);
 
     }
 
@@ -91,7 +88,7 @@ public class DB {
         if (possibleOfflinePlayers.first() == null){
             return false;
         }
-        usersCollection.updateMany(eq("name", uname),
+        db.getCollection("users").updateMany(eq("name", uname),
                 new Document("$set", new Document("frozen",true)));
         return true;
 
@@ -101,7 +98,7 @@ public class DB {
         if (possibleOfflinePlayers.first() == null){
             return false;
         }
-        usersCollection.updateMany(eq("name", uname),
+        db.getCollection("users").updateMany(eq("name", uname),
                 new Document("$set", new Document("frozen",false)));
         return true;
 
@@ -118,7 +115,7 @@ public class DB {
 
     public static boolean updateUserEntry(Player player, Document update){
         String playerUUID = player.getUniqueId().toString();
-        usersCollection.updateOne(eq("_id", playerUUID),
+        db.getCollection("users").updateOne(eq("_id", playerUUID),
                                   new Document("$set", update));
         return true;
     }
@@ -130,13 +127,13 @@ public class DB {
 
         String playerUUID = player.getUniqueId().toString();
         Document query = new Document("_id",playerUUID);
-        Document user = usersCollection.find(query).first();
+        Document user = db.getCollection("users").find(query).first();
 
         return user;
     }
     public static FindIterable<Document> getUserDBEntry(String name){
         Document query = new Document("name",name);
-        FindIterable<Document> user = usersCollection.find(query);
+        FindIterable<Document> user = db.getCollection("users").find(query);
         return user;
     }
 
